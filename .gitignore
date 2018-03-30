@@ -1,0 +1,17 @@
+# Caches
+.vscode/
+__pycache__/
+
+# Mac OS files
+.DS_Store
+
+# Build Directory
+dist/
+build/
+*.egg-info/
+
+# Jupyter Lab
+*.ipynb*
+
+# venv
+env/
