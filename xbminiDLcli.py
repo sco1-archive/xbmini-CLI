@@ -1,20 +1,42 @@
 import platform
+import logging
+import time
 import re
 from pathlib import Path
 
-import win32api
+# Platform specific imports
+myOS = platform.system().lower()
+if myOS.startswith('win'):
+    import win32api
 
+# Force UTC Timestamps
+# From the logging cookbook: https://docs.python.org/3/howto/logging-cookbook.html
+class UTCFormatter(logging.Formatter):
+    converter = time.gmtime
+
+logformat = r'%(asctime)s %(levelname)s:%(module)s:%(message)s'
+dateformat = r'%Y-%m-%d %H:%M:%S'
+logging.basicConfig(filename='./log/xbminiCLI.log', filemode='a', level=logging.DEBUG, 
+                    format=logformat, datefmt=dateformat
+                    )
 
 def getXBMdrives():
-    myOS = platform.system()
-    if myOS == 'Windows':
+    if myOS.startswith('win'):
         # Pull list of drive letters
         drives = win32api.GetLogicalDriveStrings()
         drives = [drivestr for drivestr in drives.split('\000') if drivestr]
         
         # Associate drive names with drive
-        drivenames = {drive:win32api.GetVolumeInformation(drive)[0] for drive in drives}
-        
+        drivenames = {}
+        for drive in drives:
+            try:
+                drivenames[drive] = win32api.GetVolumeInformation(drive)[0]
+            except win32api.error as err:
+                if err.args[0] == 21:
+                    logging.debug(f"{drive} not ready, ignoring...")
+                else:
+                    raise err
+                
         xbminidrives = [Path(drive) for drive in drivenames if re.match('X\d+D\d+', drivenames[drive])]
     else:
         # TODO: Add OSX support, then Linux (if different from OSX)
