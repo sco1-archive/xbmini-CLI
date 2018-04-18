@@ -2,6 +2,8 @@ import platform
 import logging
 import time
 import re
+
+import click
 from pathlib import Path
 
 # Platform specific imports
@@ -19,6 +21,15 @@ dateformat = r'%Y-%m-%d %H:%M:%S'
 logging.basicConfig(filename='./log/xbminiCLI.log', filemode='a', level=logging.DEBUG, 
                     format=logformat, datefmt=dateformat
                     )
+
+@click.comand()
+@click.option('--date', prompt=True, help='Drop Date [str:YYYYMMDD]')
+@click.option('--location', prompt=True, help='Drop Location [str]')
+@click.option('--systemname', prompt=True, help='Parachute System Name [str]')
+@click.option('--auw', prompt=True, help='System All Up Weight, lb [float]')
+@click.option('--nloggers', prompt=True, help='Number of XBM loggers [int]')
+def main(date, location, systemname, auw, nloggers):
+    pass
 
 def getXBMdrives():
     if myOS.startswith('win'):
@@ -43,3 +54,6 @@ def getXBMdrives():
         raise NotImplementedError
 
     return xbminidrives
+
+if __name__ == "__main__":
+    main()
