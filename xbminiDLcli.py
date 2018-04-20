@@ -25,13 +25,32 @@ logging.basicConfig(filename='./log/xbminiCLI.log', filemode='a', level=logging.
                     )
 
 @click.command()
-@click.option('--date', prompt=True, help='Drop Date [str:YYYYMMDD]')
-@click.option('--location', prompt=True, help='Drop Location [str]')
-@click.option('--systemname', prompt=True, help='Parachute System Name [str]')
-@click.option('--auw', prompt=True, help='System All Up Weight, lb [float]')
-@click.option('--nloggers', prompt=True, help='Number of XBM loggers [int]')
-def main(date, location, systemname, auw, nloggers):
-    pass
+@click.option('--date', type=str, prompt=True, help='Drop Date [YYYYMMDD]')
+@click.option('--location', type=str, prompt=True, help='Drop Location')
+@click.option('--systemname', type=str, prompt=True, help='Parachute System Name')
+@click.option('--auw', type=float, prompt=True, help='System All Up Weight [lb]')
+@click.option('--nloggers', type=int, prompt=True, help='Number of XBM loggers')
+@click.option('--outpath', type=click.Path(), default=Path('.'), help='Base Output Directory')
+@click.option('--timeout', type=int, default=5, help='Device Polling Timeout (s)')
+def mainCLI(outpath, date, location, systemname, auw, nloggers, timeout):
+    xbmdrives = XBMpoll(timeout)
+
+def XBMpoll(timeout, pollinginterval=0.5):
+    click.secho('\nPolling for XBM devices...', fg='green')
+
+    pollinginterval = 0.5  # Polling interval, seconds
+    pollingrange = range(0, timeout*int(1/pollinginterval), 1)  # Good enough for a simple polling loop
+    loggerfound=False
+    with click.progressbar(pollingrange, show_percent=False, show_eta=False) as bar:
+        for item in bar:
+            xbmdrives = getXBMdrives()
+            if len(xbmdrives) == 0:
+                time.sleep(pollinginterval)
+            else:
+                click.secho(f"\n Found {len(xbmdrives)} XBMs", fg='green')
+                return xbmdrives
+        else:
+            click.secho('\nNo logger(s) found', fg='red')
 
 def getXBMdrives():
     # Define XBM volume name regex
@@ -64,4 +83,4 @@ def getXBMdrives():
     return xbminidrives
 
 if __name__ == "__main__":
-    main()
+    mainCLI()
