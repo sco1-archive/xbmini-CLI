@@ -1,6 +1,8 @@
+import itertools
 import logging
 import platform
 import re
+import shutil
 import time
 from pathlib import Path
 
@@ -57,7 +59,7 @@ def mainCLI(outpathbase, date, location, systemname, auw, nloggers, timeout):
                 retry = click.confirm('Retry search?')
         
         if xbmdrives:
-            transferdata(sourcedrive, outpathbase, ii)
+            transferdata(sourcedrive, outpathbase, ii+1)
 
 def getXBMdrives():
     # Define XBM volume name regex
@@ -104,8 +106,30 @@ def XBMpoll(timeout, pollinginterval=0.5):
     else:
         logging.debug('No logger(s) found')
 
-def transferdata(sourcedrive, outpathbase):
-    pass
+def transferdata(sourcedrive, outpathbase, loggeridx):
+    inpath = sourcedrive / 'GCDC'
+    logpaths = inpath.glob('DATA-*.csv')
+
+    logcountIt, logmoveIt = itertools.tee(logpaths, 2)  # Split iterator since we need it twice
+    nlogs = sum(1 for _ in logcountIt)  # Get number of logs without converting to list
+
+    logging.debug(f"Log file path: {inpath}")
+    logging.debug(f"Found {nlogs} log files")
+    if nlogs == 0:
+        click.secho('No log files found', fg='red')
+        return
+
+    logfolderprefix = 'XBM'
+    outpath = outpathbase / f"{logfolderprefix} {loggeridx}"
+    logging.debug(f"Ouput directory: {outpath}")
+    if not outpath.exists():
+        logging.debug("Output directory not found, creating directory (w/parents)")
+        outpath.mkdir(parents=True)
+
+    transferpbar = tqdm(logmoveIt, bar_format='Downloading Log {n_fmt} of {total_fmt} |{bar}| {rate_fmt}')
+    for log in transferpbar:
+        shutil.copy(log, outpath)
+
 
 if __name__ == "__main__":
     mainCLI()
