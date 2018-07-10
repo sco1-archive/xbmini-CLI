@@ -1,0 +1,4 @@
+tqdm == 4.23
+click == 6.7
+
+pywin32 == 223; 'sys_platform' == 'Windows'
