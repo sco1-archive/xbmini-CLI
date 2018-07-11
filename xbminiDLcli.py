@@ -132,7 +132,7 @@ def transferdata(sourcedrive, outpathbase, loggeridx):
         logging.debug("Output directory not found, creating directory (w/parents)")
         outpath.mkdir(parents=True)
 
-    transferpbar = tqdm(logmoveIt, bar_format='Downloading Log {n_fmt} of {total_fmt} |{bar}| {rate_fmt}')
+    transferpbar = tqdm(logmoveIt, total=nlogs, bar_format='Downloading Log {n_fmt} of {total_fmt} |{bar}| {rate_fmt}')
     for log in transferpbar:
         shutil.copy(log, outpath)
 
