@@ -14,6 +14,7 @@ from tqdm import tqdm, trange
 myOS = platform.system().lower()
 if myOS.startswith('win'):
     import win32api
+    import pywintypes
 elif myOS == 'darwin':
     from os import listdir
 
@@ -60,8 +61,9 @@ def mainCLI(outpathbase, date, location, systemname, auw, nloggers, timeout):
                 click.secho('No logger(s) found', fg='red')
                 retry = click.confirm('Retry search?')
         
+        outpath = outpathbase / f"{date} {location}/{systemname}"
         if xbmdrives:
-            transferdata(sourcedrive, outpathbase, ii+1)
+            transferdata(sourcedrive, outpath, ii+1)
 
 def getXBMdrives():
     # Define XBM volume name regex
@@ -77,9 +79,11 @@ def getXBMdrives():
         for drive in drives:
             try:
                 drivenames[drive] = win32api.GetVolumeInformation(drive)[0]
-            except win32api.error as err:
+            except (win32api.error, pywintypes.error) as err:
                 if err.args[0] == 21:
                     logging.debug(f"{drive} not ready, ignoring...")
+                elif 'bitlocker' in err.strerror.lower():
+                    logging.debug(f"{drive} BitLockered, cannot query volume information, ignoring...")
                 else:
                     raise err
                 
@@ -122,7 +126,7 @@ def transferdata(sourcedrive, outpathbase, loggeridx):
         return
 
     logfolderprefix = 'XBM'
-    outpath = outpathbase / f"{date} {location}/{systemname}/{logfolderprefix} {loggeridx}"
+    outpath = outpathbase / f"{logfolderprefix} {loggeridx}"
     logging.debug(f"Ouput directory: {outpath}")
     if not outpath.exists():
         logging.debug("Output directory not found, creating directory (w/parents)")
