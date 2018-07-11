@@ -3,6 +3,7 @@ import logging
 import platform
 import re
 import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -37,7 +38,8 @@ logging.basicConfig(filename='./log/xbminiCLI.log', filemode='a', level=logging.
 @click.option('--timeout', type=int, default=5, help='Device Polling Timeout (s)')
 def mainCLI(outpathbase, date, location, systemname, auw, nloggers, timeout):
     if not outpathbase:
-        outpathbase = Path(f"./{date} {location}/{systemname}")
+        # Default to current directory
+        outpathbase = Path(f".")
 
     for ii in range(nloggers):
         click.pause(info=f"\nPress any key to download logger #{ii+1} ... ")
@@ -120,7 +122,7 @@ def transferdata(sourcedrive, outpathbase, loggeridx):
         return
 
     logfolderprefix = 'XBM'
-    outpath = outpathbase / f"{logfolderprefix} {loggeridx}"
+    outpath = outpathbase / f"{date} {location}/{systemname}/{logfolderprefix} {loggeridx}"
     logging.debug(f"Ouput directory: {outpath}")
     if not outpath.exists():
         logging.debug("Output directory not found, creating directory (w/parents)")
@@ -131,5 +133,9 @@ def transferdata(sourcedrive, outpathbase, loggeridx):
         shutil.copy(log, outpath)
 
 
-if __name__ == "__main__":
+if len(sys.argv) == 1:
+    # If called without inputs, automatically enter interactive mode
     mainCLI()
+else:
+    # Otherwise pass everything straight through
+    mainCLI(sys.argv[1:])
